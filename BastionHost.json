@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Group7's CloudFormation Assignment",
+    "Description": "loudFormation Bastion Host ",
     "Metadata": {
 
     },
