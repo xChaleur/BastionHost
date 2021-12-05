@@ -1,0 +1,300 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Group7's CloudFormation Assignment",
+    "Metadata": {
+
+    },
+    "Parameters": {
+        "vpcCidr": {
+            "Description": "Cidr For VPC",
+            "Type": "String",
+            "Default": "10.0.0.0/16"
+        },
+        "SubnetAz1": {
+            "Description": "AZ for Subnet1",
+            "Type": "AWS::EC2::AvailabilityZone::Name"
+        },
+        "SubnetAz2": {
+            "Description": "AZ for Subnet1",
+            "Type": "AWS::EC2::AvailabilityZone::Name"
+        },
+        "PublicSubCidr": {
+            "Description": "-",
+            "Type": "String",
+            "Default": "10.0.1.0/24"
+        },
+        "launchPublicIPSubnet": {
+            "Description": "Map Subnet IP on launch",
+            "Type": "String",
+            "Default": "Select...",
+            "AllowedValues" : ["true",  "false",  "Select..."]
+        },
+        "PrivateSubCidr": {
+            "Description": "-",
+            "Type": "String",
+            "Default": "10.0.2.0/24"
+        },
+        "Ec2PublicIP": {
+            "Description": "Enable Ec2 Public IP on launch",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["true",  "false",  "Select..."]
+        },
+        "TerminateAPIForWebServer": {
+            "Description": "API Termination For Webserver",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["true",  "false",  "Select..."]
+        },
+        "TerminateAPIForAppServer": {
+            "Description": "API Termination for App Server",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["true",  "false",  "Select..."]
+        },
+
+        "MonitorInstanceForWebServer": {
+            "Description": "Monitor Ec2 Instance For Webserver",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["true",  "false",  "Select..."]
+        },
+        "AMIForWebServer": {
+            "Description": "Choose AMI , LINUX or Windows For Webserver",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["ami-04902260ca3d33422",  "ami-0b17e49efb8d755c3",  "Select..."]
+        },
+        "InstanceTypeForWebserver": {
+            "Description": "Choose Instance Type For Webserver",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["t2.micro",  "t2.large", "t3.nano",  "Select..."]
+        },
+        "MonitorInstanceForAppServer": {
+            "Description": "Monitor Ec2 Instance For AppServer",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["true",  "false",  "Select..."]
+        },
+        "AMIForAppServer": {
+            "Description": "Choose AMI , LINUX or Windows For AppServer",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["ami-04902260ca3d33422",  "ami-0b17e49efb8d755c3",  "Select..."]
+        },
+        "InstanceTypeForAppserver": {
+            "Description": "Choose Instance Type For AppServer",
+            "Type": "String",
+            "Default" : "Select...",
+            "AllowedValues" : ["t2.micro",  "t2.large", "t3.nano",  "Select..."]
+        }
+
+        
+
+    
+    },
+    "Mappings": {
+
+    },
+    "Conditions": {
+
+    },
+    "Resources": {
+        "G7vpc": {
+          "Type": "AWS::EC2::VPC",
+          "Properties": {
+            "CidrBlock": { "Ref": "vpcCidr" },
+            "Tags": [{ "Key": "Name", "Value":  "VPC-T" }]
+          }
+        },
+        "PublicSubnet": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": { "Ref": "SubnetAz1" },
+            "MapPublicIpOnLaunch" : { "Ref": "launchPublicIPSubnet" },
+            "VpcId": { "Ref": "G7vpc" },
+            "CidrBlock": { "Ref": "PublicSubCidr" },
+            "Tags": [{ "Key": "Name", "Value":  "PublicSubnet-T" }]
+          }
+        },
+        "PrivateSubnet": {
+          "Type": "AWS::EC2::Subnet",
+          "Properties": {
+            "AvailabilityZone": { "Ref": "SubnetAz2" },
+            "VpcId": { "Ref": "G7vpc" },
+            "CidrBlock": { "Ref": "PrivateSubCidr" },
+            "Tags": [{ "Key": "Name", "Value":  "PrivateSubnet-T" }]
+          }
+        },
+        "PublicRouteTable": {
+          "Type": "AWS::EC2::RouteTable",
+          "Properties": {
+            "VpcId": { "Ref": "G7vpc" },
+            "Tags": [{ "Key": "Name", "Value":  "PublicRouteTable-T" }]
+          }
+        },
+        "PrivateRouteTable": {
+          "Type": "AWS::EC2::RouteTable",
+          "Properties": {
+            "VpcId": { "Ref": "G7vpc" },
+            "Tags": [{ "Key": "Name", "Value":  "PrivateRouteTable-T" }]
+          }
+        },
+        "PublicRouteTableAsso": {
+          "Type": "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties": {
+            "SubnetId": { "Ref": "PublicSubnet" },
+            "RouteTableId": { "Ref": "PublicRouteTable" }
+          }
+        },
+        "PrivateRouteTableAsso": {
+          "Type": "AWS::EC2::SubnetRouteTableAssociation",
+          "Properties": {
+            "SubnetId": { "Ref": "PrivateSubnet" },
+            "RouteTableId": { "Ref": "PrivateRouteTable" }
+          }
+        },
+        "eIP": {
+          "Type": "AWS::EC2::EIP",
+          "Properties": {
+            "Domain": "vpc"
+          }
+        },
+        "InternetGW": {
+          "Type": "AWS::EC2::InternetGateway",
+          "Properties": {
+            "Tags": [{ "Key": "Name", "Value":  "IGW-T" }]
+          }
+        },
+        "AttachGateway": {
+          "Type": "AWS::EC2::VPCGatewayAttachment",
+          "Properties": {
+            "VpcId": { "Ref": "G7vpc" },
+            "InternetGatewayId": { "Ref": "InternetGW" }
+          }
+        },
+        "NAT":{
+            "Type" : "AWS::EC2::NatGateway",
+            "Properties": {
+                "AllocationId" : { "Fn::GetAtt" : ["eIP", "AllocationId"]},
+                "SubnetId" : { "Ref": "PublicSubnet" },
+                "Tags" : [{ "Key": "Name", "Value":  "NAT-T" }]
+            }
+        },
+        "PublicRoute": {
+          "Type": "AWS::EC2::Route",
+          "Properties": {
+            "RouteTableId": { "Ref": "PublicRouteTable" },
+            "DestinationCidrBlock": "0.0.0.0/0",
+            "GatewayId": { "Ref": "InternetGW" }
+          }
+        },
+        "PrivateRoute": {
+          "Type": "AWS::EC2::Route",
+          "Properties": {
+            "RouteTableId": { "Ref": "PrivateRouteTable" },
+            "DestinationCidrBlock": "0.0.0.0/0",
+            "NatGatewayId": { "Ref": "NAT" }
+          }
+        },
+        "secGroupNameIn" : {
+          "Type" : "AWS::EC2::SecurityGroup",
+          "Properties" : {
+            "GroupDescription" : "Security Group Information In",
+            "SecurityGroupIngress" : [ 
+             { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0" },
+             { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" },
+             { "IpProtocol" : "tcp", "FromPort" : "3389", "ToPort" : "3389", "CidrIp" : "0.0.0.0/0" }
+            ],
+            "VpcId" : { "Ref": "G7vpc" },
+            "Tags" :  [ { "Key": "Name", "Value":  "WebServer SG-T" } ]
+          }
+        },
+        "WebserverEc2": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "KeyName": "Group7",
+                "DisableApiTermination": { "Ref": "TerminateAPIForWebServer" },
+                "SubnetId" : { "Ref": "PublicSubnet" },
+                "ImageId": { "Ref": "AMIForWebServer" },
+                "InstanceType": { "Ref": "InstanceTypeForWebserver" },
+                "Monitoring": { "Ref": "MonitorInstanceForWebServer" },
+                "SecurityGroupIds" : { "Ref": "secGroupNameIn" },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "WebserverEc2"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -ex",
+                                "-"
+                            ]
+                        ]
+                    }
+                }
+        }
+        },
+        "secGroupNameAppSever" : {
+          "Type" : "AWS::EC2::SecurityGroup",
+          "Properties" : {
+            "GroupDescription" : "Allow SSH from Webserver",
+            "SecurityGroupIngress" : [ 
+             { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0" }],
+            "VpcId" : { "Ref": "G7vpc" },
+            "Tags" :  [ { "Key": "Name", "Value":  "AppServerSG-T" } ]
+          }
+        },
+        "AppserverEc2": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "KeyName": "Group7",
+                "DisableApiTermination": { "Ref": "TerminateAPIForAppServer" },
+                "SubnetId": { "Ref": "PrivateSubnet" },
+                "ImageId": { "Ref": "AMIForAppServer" },
+                "InstanceType": { "Ref": "InstanceTypeForAppserver" },
+                "Monitoring": { "Ref": "MonitorInstanceForAppServer" },
+                "SecurityGroupIds" : [{ "Ref": "secGroupNameAppSever" }],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "AppSever-T"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -ex",
+                                "-"
+                            ]
+                        ]
+                    }
+                }
+        }
+                }
+
+
+
+
+
+
+
+        
+
+
+
+
+
+    },
+    "Outputs": {
+
+    }
+}
+    
